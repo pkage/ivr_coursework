@@ -12,21 +12,6 @@ RUN \
 		ros-melodic-desktop-full && \
 	rm -rf /var/lib/apt/lists/*
 
-
-RUN \
-    apt-get update && \
-    apt-get install openssh-server -y && \
-    mkdir .ssh
-
-COPY id_rsa.pub /root/.ssh/authorized_keys
-
-RUN \
-	pip3 install \
-		opencv-python==4.1.1.26
-
-RUN \ 
-    pip3 install pyyaml rospkg
-
 RUN \
 	echo "source /opt/ros/melodic/setup.bash" >> /root/.bashrc && \
 	echo "source /root/catkins_ws/devel/setup.bash" >> /root/.bashrc && \
