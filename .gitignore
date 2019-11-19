@@ -1,3 +1,5 @@
+env_*
+.DS_Store
 devel/
 logs/
 build/
