@@ -55,7 +55,7 @@ class TrackedObj:
     def add_coords(self, coords):
         self.coords[0], self.coords[1], self.coords[2] = coords
 
-def countour_center(contour):
+def contour_center(contour):
     m = cv2.moments(contour)
     cX = int(m["m10"] / m["m00"])
     cY = int(m["m01"] / m["m00"])
@@ -165,8 +165,8 @@ def resolve_objects(xz_image, yz_image, tracked_objects):
                 # copy the target (in case there are multiple)
                 current_target = tracked.copy()
 
-                x, z = countour_center(contour_xz)
-                y, z = countour_center(contour_yz)
+                x, z = contour_center(contour_xz)
+                y, z = contour_center(contour_yz)
 
                 # convert everything to floats, and convert to relative coords
                 x = float(x) / float(x_scale)
