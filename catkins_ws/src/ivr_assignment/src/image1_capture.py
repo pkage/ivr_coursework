@@ -4,6 +4,8 @@ import roslib
 import sys
 import rospy
 import cv2
+import os
+import signal
 import numpy as np
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
@@ -24,6 +26,9 @@ class image_converter:
         # initialize the bridge between openCV and ROS
         self.bridge = CvBridge()
 
+        # hack to kill on first callback
+        self.killpid = os.getpid()
+
 
     # Recieve data from camera 1, process it, and publish
     def callback1(self,data):
@@ -34,7 +39,11 @@ class image_converter:
             print(e)
         
         # Uncomment if you want to save the image
-        #cv2.imwrite('image1_copy.png', self.cv_image1)
+        cv2.imwrite('cam1_yz.png', self.cv_image1)
+
+        # emulate ctrl-c
+        os.kill(self.killpid, signal.SIGINT)
+        return
 
         im1=cv2.imshow('window1', self.cv_image1)
         cv2.waitKey(1)
