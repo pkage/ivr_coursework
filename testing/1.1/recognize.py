@@ -126,7 +126,7 @@ def show_contours(image, contours, color=(255,255,255), name=None):
     return image
 
 
-def resolve_objects(xz_image, yz_image, tracked_objects):
+def resolve_objects_naive(xz_image, yz_image, tracked_objects):
     """
     Resolve objects within an image
 
@@ -181,6 +181,23 @@ def resolve_objects(xz_image, yz_image, tracked_objects):
 
     return processed
 
+def resolve_object_stereo_contours(yz_image, xz_image, tracked_obj):
+    results = []
+
+    # find the contours from the xz and yz images
+    contours_yz = find_contours(
+        yz_image.copy(),
+        tracked_obj.lower_color,
+        tracked_obj.upper_color
+    )
+    contours_xz = find_contours(
+        xz_image.copy(),
+        tracked_obj.lower_color,
+        tracked_obj.upper_color
+    )
+
+    return list(zip(contours_yz, contours_xz))
+
 
 
 if __name__=="__main__":
@@ -195,7 +212,7 @@ if __name__=="__main__":
     tracked_objects = [
         TrackedObj(
             'BlueJoint',
-            [0,0,255],
+            np.array([0,0,255]),
         ),
         TrackedObj(
             'GreenJoint',
