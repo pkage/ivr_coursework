@@ -95,7 +95,7 @@ def find_contours(image, lower_color, upper_color, circularity=0):
         mask = cv2.inRange(hsv, lower_color, upper_color) 
     
     cv2.imwrite('mask.png', mask)
-    contours, hierarchy = cv2.findContours(
+    _, contours, _ = cv2.findContours(
             mask,
             cv2.RETR_TREE,
             cv2.CHAIN_APPROX_SIMPLE
@@ -217,33 +217,27 @@ def resolve_object_stereo_contours(yz_image, xz_image, tracked_obj):
 
 
 
-if __name__=="__main__":
-    img_yz = cv2.imread('../captures/cam1_yz_pose1.png')
-    img_xz = cv2.imread('../captures/cam2_xz_pose1.png')
 
 
-    #marked = img.copy()
-
-    #print('image dimensions:', img.shape)
-
+def markup_image(img):
     tracked_objects = [
-#        TrackedObj(
-#            'BlueJoint',
-#            np.array([0,0,255]),
-#        ),
-#        TrackedObj(
-#            'GreenJoint',
-#            np.array([0,255,0]),
-#        ),
-#        TrackedObj(
-#            'RedJoint',
-#            np.array([255,0,0]),
-#        ),
-#        TrackedObj(
-#            'YellowJoint',
-#            np.array([255,255,0]),
-#            tolerance=5
-#        ),
+        TrackedObj(
+            'BlueJoint',
+            np.array([0,0,255]),
+        ),
+        TrackedObj(
+            'GreenJoint',
+            np.array([0,255,0]),
+        ),
+        TrackedObj(
+            'RedJoint',
+            np.array([255,0,0]),
+        ),
+        TrackedObj(
+            'YellowJoint',
+            np.array([255,255,0]),
+            tolerance=5
+        ),
         TrackedObj(
             'Sphere Floater',
             np.array([255,165,0]),
@@ -259,12 +253,11 @@ if __name__=="__main__":
     ]
 
 
-    img    = img_xz.copy()
-    marked = img_xz.copy()
+    marked = img.copy()
+
     for tracked in tracked_objects:
         #print('resolving %s' % tracked.name)
-        print('resolving %s' % tracked)
-        contours = find_contours(img_xz.copy(), tracked.lower_color, tracked.upper_color)
+        contours = find_contours(img.copy(), tracked.lower_color, tracked.upper_color)
 
         # quick n dirty filter
         contours = [contour for contour in contours if tracked.test_contour(contour)]
@@ -272,9 +265,10 @@ if __name__=="__main__":
         try:
             marked = show_contours(marked, contours, name=tracked.name)
         except Exception as e:
-            print('\tsomething went wrong with %s' % tracked.name)
+            pass
+            #print('\tsomething went wrong with %s' % tracked.name)
 
-    cv2.imwrite('test.png', marked)
+    return marked
 
 #im2, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 #for c in contours:

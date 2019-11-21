@@ -21,17 +21,69 @@ class Camera:
         cX = float(m["m10"] / m["m00"])
         cY = float(m["m01"] / m["m00"])
 
+
+        # convert to angles using Math(tm)
+        
+        # x-case
+
+        # first, determine the distance from the image plane
+        zX = float(self.sensor_size[0]) / math.tan(self.fov/2.0)
+
+        # get offset from the image center
+        cXa = (float(self.sensor_size[0] / 2) - cX) * -1
+        cXa = math.atan( cXa / zX )
+
+        #print('zX: {}, cX: {} (from {})'.format(
+        #    zX,
+        #    math.degrees(cXa), 
+        #    math.degrees(
+        #        (cX / float(self.sensor_size[0]) * self.fov) - (self.fov / 2)
+        #    )
+        #))
+
+        # y-case
+
+        # first, determine the distance from the image plane
+        zY = float(self.sensor_size[1]) / math.tan(self.fov/2.0)
+
+        # get offset from the image center
+        cYa = (float(self.sensor_size[1] / 2) - cY) * -1
+        cYa = math.atan( cYa / zY )
+
+        #print('zY: {}, cY: {} (from {})'.format(
+        #    zY,
+        #    math.degrees(cYa), 
+        #    math.degrees(
+        #        (cY / float(self.sensor_size[1]) * self.fov) - (self.fov / 2)
+        #    )
+        #))
+
+        print('\t\tangles: x: {}, y: {}'.format( math.degrees(cXa), math.degrees(cYa * -1)))
+        return (cXa, cYa * -1)
+
         # get the fractions across the image X and Y
         cX /= float(self.sensor_size[0])
         cY /= float(self.sensor_size[1])
+
+
+        #
 
         # convert to fractions of the field of view (in radians?)
         cX *= self.fov
         cY *= self.fov
 
+
         # and shift over to center
         cX = (self.fov / 2.0) - cX
         cY = (self.fov / 2.0) - cY
+        
+        # (inverted because the y axis is the opposite direction in a 2d image)
+        cY *= -1
+
+        #print('centroids: {}, {}'.format(
+        #    math.degrees(cX),
+        #    math.degrees(cY)
+        #))
 
         return (cX, cY)
 
@@ -53,22 +105,22 @@ class XZCamera(Camera):
         # X in image = Y in 3d space
         # Y in image = Z in 3d space
         cX, cZ = self.get_perpendicular_angles( contour )
-        print('\t\tperpendicular angles for XZ contour: ({}, {})'.format(
-            math.degrees(cX),
-            math.degrees(cZ)
-        ))
+        #print('\t\tperpendicular angles for XZ contour: ({}, {})'.format(
+        #    math.degrees(cX),
+        #    math.degrees(cZ)
+        #))
 
 
         # Base vector : Along the Y axis, cX
-        slopes = np.array([ math.tan(cX), 1, math.tan(cX) * math.tan(cZ) ])
+        slopes = np.array([ math.tan(cX), 1, math.tan(cZ) ])
 
         # intermediate step: calculate norm
         slope_vec_len = np.linalg.norm(slopes)
 
-        print('\t\t\tresulting norm is {} => {}'.format(
-            slope_vec_len,
-            np.linalg.norm(slopes / slope_vec_len)
-        ))
+        #print('\t\t\tresulting norm is {} => {}'.format(
+        #    slope_vec_len,
+        #    np.linalg.norm(slopes / slope_vec_len)
+        #))
 
 
         # return
@@ -85,20 +137,20 @@ class YZCamera(Camera):
         # X in image = Y in 3d space
         # Y in image = Z in 3d space
         cY, cZ = self.get_perpendicular_angles( contour )
-        print('\t\tperpendicular angles for YZ contour: ({}, {})'.format(
-            math.degrees(cY),
-            math.degrees(cZ)
-        ))
+        #print('\t\tperpendicular angles for YZ contour: ({}, {})'.format(
+        #    math.degrees(cY),
+        #    math.degrees(cZ)
+        #))
 
 
         # Base vector : Along the X axis, cY
-        slopes = np.array([ -1, math.tan(cY), math.tan(cY) * math.tan(cZ) ])
+        slopes = np.array([ -1, math.tan(cY), math.tan(cZ) ])
 
         # intermediate step: calculate norm
         slope_vec_len = np.linalg.norm(slopes)
 
         # return
-        return slopes# / slope_vec_len
+        return slopes #/ slope_vec_len
 
 def find_closest_point(point1, slopes1, point2, slopes2):
     """
@@ -113,6 +165,9 @@ def find_closest_point(point1, slopes1, point2, slopes2):
 
     :returns: Vec3
     """
+    print(point1, point2)
+    print(slopes1, slopes2)
+
     # find unit direction vector for line C, which is perpendicular to lines A and B
     slopes_perp = np.cross(slopes2, slopes1)
     slopes_perp /= np.linalg.norm(slopes_perp)
@@ -124,7 +179,15 @@ def find_closest_point(point1, slopes1, point2, slopes2):
     # get t1, t2, t3 (solutions to the system of linear eqs)
     solution = np.linalg.solve(LHS, RHS)
 
-    return (point1 + ((solution[0]) * slopes1))
+    # get some uncertainty on this measurement
+    # e.g. how close together are the two points
+
+    point4 = point2 + (solution[1]*slopes2)
+    point3 = point1 + (solution[0]*slopes1)
+
+    print('\tuncertainty: {}'.format(np.linalg.norm(point4 - point3)))
+
+    #return (point1 + ((solution[0]) * slopes1))
     # p3 = p1 + t1v1
     # so the midpoint of the closest points is p4 = (p3) + (t3/2)(slopes_perp)
     #    -> in other words, halfway up the vector from 
