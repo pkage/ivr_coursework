@@ -227,23 +227,23 @@ if __name__=="__main__":
     #print('image dimensions:', img.shape)
 
     tracked_objects = [
-#        TrackedObj(
-#            'BlueJoint',
-#            np.array([0,0,255]),
-#        ),
-#        TrackedObj(
-#            'GreenJoint',
-#            np.array([0,255,0]),
-#        ),
-#        TrackedObj(
-#            'RedJoint',
-#            np.array([255,0,0]),
-#        ),
-#        TrackedObj(
-#            'YellowJoint',
-#            np.array([255,255,0]),
-#            tolerance=5
-#        ),
+        TrackedObj(
+            'BlueJoint',
+            np.array([0,0,255]),
+        ),
+        TrackedObj(
+            'GreenJoint',
+            np.array([0,255,0]),
+        ),
+        TrackedObj(
+            'RedJoint',
+            np.array([255,0,0]),
+        ),
+        TrackedObj(
+            'YellowJoint',
+            np.array([255,255,0]),
+            tolerance=5
+        ),
         TrackedObj(
             'Sphere Floater',
             np.array([255,165,0]),
@@ -259,12 +259,12 @@ if __name__=="__main__":
     ]
 
 
-    img    = img_xz.copy()
-    marked = img_xz.copy()
+    img    = img_yz.copy()
+    marked = img_yz.copy()
     for tracked in tracked_objects:
         #print('resolving %s' % tracked.name)
         print('resolving %s' % tracked)
-        contours = find_contours(img_xz.copy(), tracked.lower_color, tracked.upper_color)
+        contours = find_contours(img.copy(), tracked.lower_color, tracked.upper_color)
 
         # quick n dirty filter
         contours = [contour for contour in contours if tracked.test_contour(contour)]

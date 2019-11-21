@@ -34,7 +34,6 @@ if __name__=='__main__':
     img_yz = cv2.imread('../captures/cam1_yz_pose1.png')
     img_xz = cv2.imread('../captures/cam2_xz_pose1.png')
 
-
     # camera setup
     camera_yz = YZCamera(
         position=np.array([18, 0, 3]),
@@ -48,23 +47,23 @@ if __name__=='__main__':
     )
     
     tracked_objects = [
-        TrackedObj(
-            'YellowJoint',
-            np.array([255,255,0]),
-            tolerance=5
-        ),
-        TrackedObj(
-            'BlueJoint',
-            np.array([0,0,255]),
-        ),
+#        TrackedObj(
+#            'YellowJoint',
+#            np.array([255,255,0]),
+#            tolerance=5
+#        ),
+#        TrackedObj(
+#            'BlueJoint',
+#            np.array([0,0,255]),
+#        ),
         TrackedObj(
             'GreenJoint',
             np.array([0,255,0]),
         ),
-        TrackedObj(
-            'RedJoint',
-            np.array([255,0,0]),
-        ),
+#        TrackedObj(
+#            'RedJoint',
+#            np.array([255,0,0]),
+#        ),
 #        TrackedObj(
 #            'Floater',
 #            np.array([255,165,0]),
@@ -92,10 +91,10 @@ if __name__=='__main__':
             #        xz_slopes
             #))
 
-            #print_eqs(
-            #        camera_yz.position, yz_slopes,
-            #        camera_xz.position, xz_slopes
-            #3)
+            print_eqs(
+                    camera_yz.position, yz_slopes,
+                    camera_xz.position, xz_slopes
+            )
 
             position = find_closest_point(
                 camera_yz.position, yz_slopes,
