@@ -171,8 +171,8 @@ class StereoVisionController:
         # emulate ctrl-c
         #os.kill(self.killpid, signal.SIGINT)
         #return
-        #print('q_real: {}'.format( np.array([0, 0, 0, 0 ])))
-        #return
+        print('q_real: {}'.format( list(q) ))
+        return
 
 
         #q[2] = q[2] * -1 # HACKS
@@ -187,15 +187,13 @@ class StereoVisionController:
         #    math.degrees(q[3])
         #]))
 
-        # prep
-        #q = np.flipud(q) * -1
 
         real_effector = np.array(self.positions['RedJoint'])
         #effector = self.kmatics.forward_kinematics([0, 1, -1, 1])
         #effector = self.kmatics.forward_kinematics([0, 0, 0, 1.5707])
-        effector = self.kmatics.forward_kinematics([0.0, 1.0, -1.0, 1.0])
+        ##effector = self.kmatics.forward_kinematics([0.0, 1, 1, 1])
 
-        #effector = self.kmatics.forward_kinematics(q)
+        effector = self.kmatics.forward_kinematics(q)
 
 
 

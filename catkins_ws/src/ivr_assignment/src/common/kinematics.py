@@ -68,13 +68,13 @@ class Kinematics:
         A4 = self.plugIn(d       ,   0, -2, 0)
         '''
 
+        # WORKING
         _90  = math.pi / 2.0
         _180 = math.pi
-        A1 = self.__gen_A(a +  _90, _90, 0, 2)
-        A2 = self.__gen_A(b +  _90, 1 * _90, 0, 0)
-        A3 = self.__gen_A(c, -1 * _90, 3, 0)
-        A4 = self.__gen_A(d,   0, 2, 0)
-
+        A1 = self.__gen_A(a +  _90,      _90, 0, 2)
+        A2 = self.__gen_A(b +  _90,  1 * _90, 0, 0)
+        A3 = self.__gen_A(       c, -1 * _90, 3, 0)
+        A4 = self.__gen_A(       d,        0, 2, 0)
 
 
         mult = np.matmul(
@@ -166,6 +166,41 @@ class Kinematics:
         c=joints[2]
         d=joints[3]
 
+        jacobian = [
+            [
+                2*cos(d)*((cos(a) * sin(b) * cos(c)) - (sin(a) * sin(c))) - (2*sin(d)*cos(a)*cos(b) + 2*cos(a)*sin(b)), #1.1
+                2*cos(d)*(sin(a)*cos(b)*cos(c)) + 2*sin(d)*sin(a)*sin(b) + 2*sin(a)*cos(b), # 1.2
+                2*cos(d)*(-1*sin(a)*sin(b)*sin(c) + cos(a)*cos(c)) # 1.3
+                -2*sin(d)*(sin(a)*sin(b)*cos(c) + cos(a)*sin(c)) - 2*cos(d)*sin(a)*cos(b) # 1.4
+            ],
+            [
+                2*sin(d)*(cos(a)*sin(c) + sin(a)*sin(b)*cos(c)) + 2*sin(a)*cos(b)*sin(d) + 2*sin(a)*sin(b), # 2.1
+                2*sin(d)*(-1*cos(a)*cos(b)*cos(c)) + 2*cos(a)*sin(b)*sin(d) - 2*cos(a)*cos(b), # 2.2
+                2*sin(d)*(sin(a)*cos(c) + cos(a)*sin(b)*sin(c)), # 2.3
+                2*cos(d)*(sin(a)*sin(c) - cos(a)*sin(b)*cos(c)) - 2*cos(a)*cos(b)*cos(d), # 2.4
+            ],
+            [
+                0, # 3.1
+                -2*cos(d)*sin(b)*cos(c) + 2*cos(b)*sin(d) - 2*sin(b), # 3.2
+                -2*cos(d)*cos(b)*sin(c), # 3.3
+                -2*sin(d)*cos(b)*cos(c) + 2*sin(b)*cos(d), # 3.4
+            ],
+            [
+                0, # 4.1
+                -2*sin(b), # 4.2
+                0, # 4.3
+                0  # 4.4
+            ]
+        ]
+
+        j_out = np.ndarray((4,4))
+        for row in range(0,3):
+            for col in range(0,3):
+                j_out[row][col] = jacobian[row][col]
+
+        return j_out
+
+        '''
         jacobian = np.array([[2*cos(d)*((-1)*sin(a)*sin(b)*cos(c) - cos(a)*sin(c))+ 2*sin(d)*sin(a)*cos(b) -3*sin(a)*sin(b)*cos(c)-2*sin(a)*sin(b)-3*cos(a)*sin(c),
                               2*cos(d)*(cos(a)*cos(b)*cos(c))+2*sin(d)*cos(a)*sin(b)+3*cos(a)*cos(b)*cos(c)+2*cos(a)*cos(b),
                               2*cos(d)*((-1)*cos(a)*sin(b)*sin(c)-sin(a)*cos(c))-3*cos(a)*sin(b)*sin(c)-3*sin(a)*cos(c),
@@ -183,6 +218,7 @@ class Kinematics:
                            (-3)*cos(b)*sin(c),
                            0
                            ]])
+        '''
         return jacobian
 
     # Estimate control inputs for open-loop control
@@ -241,7 +277,9 @@ class Kinematics:
         # estimate error
         self.error = pos_d-pos
 
-        J_inv = np.linalg.pinv(self.calculate_jacobian(np.zeros((4))))  # calculating the psudeo inverse of Jacobian
+
+        J_inv = self.calculate_jacobian(np.zeros(4))
+        J_inv = np.linalg.pinv(J_inv)  # calculating the psudeo inverse of Jacobian
 
         dq_d =np.dot(J_inv, ( np.dot(K_d,self.error_d.transpose()) + np.dot(K_p,self.error.transpose()) ) )  # control input (angular velocity of joints)
         q_d = q + (dt * dq_d)  # control input (angular position of joints)
