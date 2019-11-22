@@ -27,8 +27,8 @@ def print_eqs(yz_pos, yz_slopes, xz_pos, xz_slopes):
     ))
     global_eq_name = chr(ord(global_eq_name) + 1)
 
-def normalize_to_robot(basejoint, target):
-    return target - basejoint
+def normalize_to_robot(basejoint, target,scale=1):
+    return (target - basejoint) * scale
 
 if __name__=='__main__':
     img_yz = cv2.imread('../captures/cam1_yz_pose1.png')
