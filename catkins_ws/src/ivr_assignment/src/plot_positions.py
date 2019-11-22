@@ -15,8 +15,8 @@ from common.recognize import TrackedObj, resolve_object_stereo_contours, get_cir
 from common.camera    import XZCamera, YZCamera, find_closest_point
 from common.stereo    import normalize_to_robot
 from common.kinematics import Kinematics
-import os
-import signal
+from copy import deepcopy
+
 
 class StereoVisionController:
 
@@ -25,23 +25,26 @@ class StereoVisionController:
         # initialize the node named image_processing
         rospy.init_node('image_processing', anonymous=True)
         # initialize a publisher to send images from camera1 to a topic named image_topic1
-        self.image_pub1 = rospy.Publisher("image_topic1",Image, queue_size = 1)
+        self.x_publisher = rospy.Publisher("/tracker/target_x", Float64, queue_size=1)
+        self.y_publisher = rospy.Publisher("/tracker/target_y", Float64, queue_size=1)
+        self.z_publisher = rospy.Publisher("/tracker/target_z", Float64, queue_size=1)
         # initialize a subscriber to recieve messages rom a topic named /robot/camera1/image_raw and use callback function to recieve data
         self.image_sub1 = rospy.Subscriber("/camera1/robot/image_raw",Image,self.callback1)
         self.image_sub2 = rospy.Subscriber("/camera2/robot/image_raw",Image,self.callback2)
 
 
-        self.killpid = os.getpid()
-
-        self.j1_pub = rospy.Publisher('/robot/joint1_position_controller/command', Float64, queue_size=1)
-        self.j2_pub = rospy.Publisher('/robot/joint2_position_controller/command', Float64, queue_size=1)
-        self.j3_pub = rospy.Publisher('/robot/joint3_position_controller/command', Float64, queue_size=1)
-        self.j4_pub = rospy.Publisher('/robot/joint4_position_controller/command', Float64, queue_size=1)
+        #self.j1_pub = rospy.Publisher('/robot/joint1_position_controller/command')
+        #self.j2_pub = rospy.Publisher('/robot/joint2_position_controller/command')
+        #self.j3_pub = rospy.Publisher('/robot/joint3_position_controller/command')
+        #self.j4_pub = rospy.Publisher('/robot/joint4_position_controller/command')
     
         # initialize position vectors
         self.positions = {}
         for track in tracked:
             self.positions[track.name] = [0.0, 0.0, 0.0]
+
+        self.oldpos = None
+        self.measurements_to_skip = 0
 
         self.cv_image_yz = None
         self.cv_image_xz = None
@@ -98,6 +101,16 @@ class StereoVisionController:
         if self.cv_image_yz is None or self.cv_image_xz is None:
             return
 
+        #if self.oldpos is not None:
+        #    self.oldpos = self.positions['Cyl Floater']
+
+
+        if self.measurements_to_skip > 0:
+            if self.measurements_to_skip == 1:
+                self.oldpos = None
+            self.measurements_to_skip -= 1
+            return
+
         for tracked_obj in self.tracked_objects:
             try:
                 # search for the tracked object
@@ -109,6 +122,7 @@ class StereoVisionController:
 
                 # if we can't see it, then this will just be skipped
                 for contour_yz, contour_xz in results:
+
                     # figure out the slopes by using the camera profiles
                     yz_slopes = self.camera_yz.calculate_slopes(contour_yz)
                     xz_slopes = self.camera_xz.calculate_slopes(contour_xz)
@@ -123,8 +137,19 @@ class StereoVisionController:
                     # we only ever have one position for an object at a time
                     self.positions[tracked_obj.name] = position
             except Exception as e:
-                #print('!!! Object {} is occluded!'.format(tracked_obj.name))
+                print('!!! Object {} is occluded!'.format(tracked_obj.name))
                 pass
+
+        if self.oldpos is not None:
+            if abs(np.linalg.norm(
+                    np.array(self.positions['Cyl Floater']).copy() - self.oldpos.copy()
+                )) > 0.75:
+                print('rejecting shitty measurements')
+                self.positions['Cyl Floater'] = self.oldpos.copy()
+                self.measurements_to_skip += 10
+                return
+        else:    
+            self.oldpos = self.positions['Cyl Floater'].copy()
 
         # normalize all the positions
         for key in self.positions:
@@ -135,79 +160,15 @@ class StereoVisionController:
             )
 
 
-        # testing
-        #print('red pos: {}, green z: {}'.format(
-        #    self.positions['RedJoint'],
-        #    self.positions['GreenJoint'][2]  
-        #))
-
-
-
-
-    
-        # find the IK angles
-        pos_arr = np.array([
-            self.positions['RedJoint'][0],
-            self.positions['RedJoint'][1],
-            self.positions['RedJoint'][2],
-            self.positions['GreenJoint'][2]
-        ])
-        self.kmatics.set_end_effector_pos(pos_arr)
-
-        #np.array([
-        #    0.3131,
-        #    -0.0076,
-        #    3.8841,
-        #    2.9092
-        #]))
-        q = self.kmatics.control_closed( pos_arr )
-
-        #self.j1_pub.publish(q[0])
-        #self.j2_pub.publish(q[1])
-        #self.j3_pub.publish(q[2])
-        #self.j4_pub.publish(q[3])
         
-        
-        # emulate ctrl-c
-        #os.kill(self.killpid, signal.SIGINT)
-        #return
-        #print('q_real: {}'.format( np.array([0, 0, 0, 0 ])))
-        #return
-
-
-        #q[2] = q[2] * -1 # HACKS
-        #q[3] = q[3] * -0.8 # HACKS
-        
-        #print('IK arrs: {}'.format(q))
-
-        #[
-        #    math.degrees(q[0]),
-        #    math.degrees(q[1]),
-        #    math.degrees(q[2]),
-        #    math.degrees(q[3])
-        #]))
-
-        # prep
-        #q = np.flipud(q) * -1
-
-        real_effector = np.array(self.positions['RedJoint'])
-        #effector = self.kmatics.forward_kinematics([0, 1, -1, 1])
-        #effector = self.kmatics.forward_kinematics([0, 0, 0, 1.5707])
-        effector = self.kmatics.forward_kinematics([0.0, 1.0, -1.0, 1.0])
-
-        #effector = self.kmatics.forward_kinematics(q)
+        key = 'Cyl Floater'
+        print('{}: {}'.format(key, self.positions[key]))
+        self.x_publisher.publish(self.positions[key][0])
+        self.y_publisher.publish(self.positions[key][1])
+        self.z_publisher.publish(self.positions[key][2])
 
 
 
-
-        #print('a real: {}'.format(np.array([0.0, 0.0, -1.5707, 0.0])))
-        #print('a pred: {}'.format(q))
-        
-
-        print('pred: {}\nreal: {}'.format( list(effector), list(real_effector )))
-        #print('err:  {}'.format( real_effector - effector ))
-
-        
 
 # call the class
 def main(args):

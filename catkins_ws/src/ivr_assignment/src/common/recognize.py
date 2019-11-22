@@ -94,7 +94,7 @@ def find_contours(image, lower_color, upper_color, circularity=0):
     else:
         mask = cv2.inRange(hsv, lower_color, upper_color) 
     
-    cv2.imwrite('mask.png', mask)
+    #cv2.imwrite('mask.png', mask)
     _, contours, _ = cv2.findContours(
             mask,
             cv2.RETR_TREE,
