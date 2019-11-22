@@ -4,7 +4,11 @@ Entry points:
   `catkins_ws/src/ivr_assignment/src/q2_1.py`
   `catkins_ws/src/ivr_assignment/src/plot_positions.py`
 
+[slides for the presentation](https://drive.google.com/open?id=1I2i-fp2cOeVdoyhy3LlpBbI6HsFIgMqW8yh8qWRwkF0), [jacobian/dh param calculations](https://drive.google.com/open?id=1VYwk-vyP0e_YVNXd3Oo9L6ZwwtEx9sK5)
+
+
 Docker image with ROS and OpenCV, accessible via a web browser. Not very tested, runs as root: probably insecure.
+
 
 
 
