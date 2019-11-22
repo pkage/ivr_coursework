@@ -96,7 +96,7 @@ if __name__=='__main__':
                     camera_xz.position, xz_slopes
             )
 
-            position = find_closest_point(
+            position, _ = find_closest_point(
                 camera_yz.position, yz_slopes,
                 camera_xz.position, xz_slopes
             )

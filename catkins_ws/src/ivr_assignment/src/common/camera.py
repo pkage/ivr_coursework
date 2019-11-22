@@ -58,7 +58,7 @@ class Camera:
         #    )
         #))
 
-        print('\t\tangles: x: {}, y: {}'.format( math.degrees(cXa), math.degrees(cYa * -1)))
+        #print('\t\tangles: x: {}, y: {}'.format( math.degrees(cXa), math.degrees(cYa * -1)))
         return (cXa, cYa * -1)
 
         # get the fractions across the image X and Y
@@ -163,10 +163,10 @@ def find_closest_point(point1, slopes1, point2, slopes2):
     :param point2: Second line origin
     :param slopes2: Second line origin
 
-    :returns: Vec3
+    :returns: tuple (Vec3 position, uncertainty)
     """
-    print(point1, point2)
-    print(slopes1, slopes2)
+    #print(point1, point2)
+    #print(slopes1, slopes2)
 
     # find unit direction vector for line C, which is perpendicular to lines A and B
     slopes_perp = np.cross(slopes2, slopes1)
@@ -185,13 +185,13 @@ def find_closest_point(point1, slopes1, point2, slopes2):
     point4 = point2 + (solution[1]*slopes2)
     point3 = point1 + (solution[0]*slopes1)
 
-    print('\tuncertainty: {}'.format(np.linalg.norm(point4 - point3)))
+    #print('\tuncertainty: {}'.format(np.linalg.norm(point4 - point3)))
 
     #return (point1 + ((solution[0]) * slopes1))
     # p3 = p1 + t1v1
     # so the midpoint of the closest points is p4 = (p3) + (t3/2)(slopes_perp)
     #    -> in other words, halfway up the vector from 
-    return (point1 + ((solution[0]) * slopes1)) + (solution[2] * slopes_perp)
+    return ((point1 + ((solution[0]) * slopes1)) + (solution[2] * slopes_perp), np.linalg.norm(point4 - point3))
 
 # ---
 '''
